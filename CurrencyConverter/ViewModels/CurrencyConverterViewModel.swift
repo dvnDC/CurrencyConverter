@@ -16,7 +16,7 @@ class CurrencyConverterViewModel: ObservableObject {
     @Published var targetCurrency: String = "EUR"
     @Published var amountText: String = ""
     @Published var resultText: String = ""
-    @Published var rateText: String = ""
+    @Published var rateLines: [String] = []
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
 
@@ -34,11 +34,11 @@ class CurrencyConverterViewModel: ObservableObject {
         do {
             let rateFrom = (baseCurrency == "PLN") ? 1.0 : try await service.fetchRate(for: baseCurrency)
             let rateTo   = (targetCurrency == "PLN") ? 1.0 : try await service.fetchRate(for: targetCurrency)
-            let convertedValue = (amount * rateFrom) / rateTo
+            let converted = (amount * rateFrom) / rateTo
             let formatter = NumberFormatter()
             formatter.numberStyle = .decimal
             formatter.maximumFractionDigits = 2
-            if let formatted = formatter.string(from: NSNumber(value: convertedValue)) {
+            if let formatted = formatter.string(from: NSNumber(value: converted)) {
                 resultText = "\(formatted) \(targetCurrency)"
             } else {
                 resultText = "Conversion error"
@@ -48,8 +48,8 @@ class CurrencyConverterViewModel: ObservableObject {
         }
     }
 
-    func fetchRateText() async {
-        rateText = ""
+    func fetchRateLines() async {
+        rateLines = []
         do {
             let rateFrom = (baseCurrency == "PLN") ? 1.0 : try await service.fetchRate(for: baseCurrency)
             let rateTo   = (targetCurrency == "PLN") ? 1.0 : try await service.fetchRate(for: targetCurrency)
@@ -58,14 +58,12 @@ class CurrencyConverterViewModel: ObservableObject {
             let formatter = NumberFormatter()
             formatter.numberStyle = .decimal
             formatter.maximumFractionDigits = 4
-            var lines: [String] = []
             if let d = formatter.string(from: NSNumber(value: direct)) {
-                lines.append("1 \(baseCurrency) = \(d) \(targetCurrency)")
+                rateLines.append("1 \(baseCurrency) = \(d) \(targetCurrency)")
             }
             if let inv = formatter.string(from: NSNumber(value: inverse)) {
-                lines.append("1 \(targetCurrency) = \(inv) \(baseCurrency)")
+                rateLines.append("1 \(targetCurrency) = \(inv) \(baseCurrency)")
             }
-            rateText = lines.joined(separator: "\n")
         } catch {
             // ignore errors
         }
